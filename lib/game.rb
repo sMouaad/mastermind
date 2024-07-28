@@ -77,8 +77,8 @@ class Game
       element if user_combo[index] != @code_combo[index]
     end
     @board[row][:correct_guesses] = 4 - filtered_user.size
-    @board[row][:correct_colors] = filtered_user.uniq.reduce(0) do |sum, value|
-      sum + ([filtered_code.count(value), filtered_user.count(value)].min % ([filtered_code.count(value), filtered_user.count(value)].max + 1))
+    @board[row][:correct_colors] = filtered_user.uniq.sum do |value|
+      ([filtered_code.count(value), filtered_user.count(value)].min % ([filtered_code.count(value), filtered_user.count(value)].max + 1))
     end
   end
 
