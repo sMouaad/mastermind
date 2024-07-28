@@ -2,12 +2,14 @@ require 'colorize'
 require_relative 'human'
 require_relative 'computer'
 require_relative 'code'
+require_relative 'clear_screen'
 
 class Game
   include Code
+  include ClearScreen
   ROLES = %i[guesser codemaker].freeze
   ROWS = 12
-  ARROW = '⇩'.freeze
+  ARROW = ' ▼ '.freeze
   BOARD_HEADER = ' _______________'.freeze
   BOARD_FOOTER = '|___|___|___|___|'.freeze
 
@@ -35,24 +37,34 @@ class Game
     loop do
       print_board
       # If all rows are full, game over
-      if @play_count == 12
-        puts "You lose! the code was #{code_to_pegs(code_combo, @peg)}"
-        return
-      end
+      return if rows_full?
+
       # else, continue game
       user_combo = @guesser.play
-      return if check_win(code_combo, user_combo)
 
       update_board(@play_count, user_combo)
+      return if check_win?(code_combo, user_combo)
+
       @play_count += 1
     end
   end
 
-  def check_win(code_combo, user_combo)
-    return unless code_combo.eql? user_combo
+  def rows_full?
+    if @play_count == 12
+      puts "You lose! the code was #{code_to_pegs(code_combo, @peg)}"
+      return true
+    end
+    false
+  end
 
-    puts 'You won, you are a true mastermind!'
-    puts "The code was : #{code_to_pegs(code_combo, @peg)}"
+  def check_win?(code_combo, user_combo)
+    if code_combo.eql? user_combo
+      print_board
+      puts 'You won, you are a true mastermind!'
+      puts "The code was : #{code_to_pegs(code_combo, @peg)}"
+      return true
+    end
+    false
   end
 
   def update_board(row, combo)
@@ -61,6 +73,7 @@ class Game
 
   # Printing Logic
   def print_board
+    clear_screen
     print_board_header
     print_rows
     print_board_footer
@@ -77,9 +90,8 @@ class Game
   def print_input_instructions
     puts
     print_pegs
-    6.times { |index| print ' ⇩ '.colorize(Game.colors[index]) }
-    puts
-    6.times { |index| print " #{index + 1} ".colorize(Game.colors[index]) }
+    puts ARROW.colorize(color: :grey, mode: :bold) * 6
+    6.times { |index| print " #{index + 1} ".colorize(color: Game.colors[index], mode: :bold) }
     puts "  Make your guess ! #{@play_count.zero? ? "(e.g : #{generate_random_code.join})" : ''}"
   end
 
