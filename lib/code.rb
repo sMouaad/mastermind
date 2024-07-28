@@ -16,4 +16,8 @@ module Code
   def code_to_pegs(number, peg)
     Array.new(4) { |index| peg.colorize(number_to_color(number[index])) }.join
   end
+
+  def code_to_s(code)
+    code.join
+  end
 end

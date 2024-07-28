@@ -28,12 +28,13 @@ class Game
     @guesser = (role.zero? ? Human.new(ROLES[0]) : Computer.new(ROLES[0]))
     @codemaker = (role.zero? ? Computer.new(ROLES[1]) : Human.new(ROLES[1]))
     @play_count = 0
+    @code_combo = nil
     @peg = Game.peg_list[peg]
-    @board = Array.new(12) { { guesses: Array.new(4, nil), correct_place: 0, correct_color: 0 } }
+    @board = Array.new(12) { { guesses: Array.new(4, nil), correct_guesses: 0, correct_colors: 0 } }
   end
 
   def start_game
-    code_combo = @codemaker.play
+    @code_combo = @codemaker.play
     loop do
       print_board
       # If all rows are full, game over
@@ -43,7 +44,7 @@ class Game
       user_combo = @guesser.play
 
       update_board(@play_count, user_combo)
-      return if check_win?(code_combo, user_combo)
+      return if check_win?(user_combo)
 
       @play_count += 1
     end
@@ -51,24 +52,34 @@ class Game
 
   def rows_full?
     if @play_count == 12
-      puts "You lose! the code was #{code_to_pegs(code_combo, @peg)}"
+      puts "You lose! the code was #{code_to_pegs(@code_combo, @peg)}"
       return true
     end
     false
   end
 
-  def check_win?(code_combo, user_combo)
-    if code_combo.eql? user_combo
+  def check_win?(user_combo)
+    if @code_combo.eql? user_combo
       print_board
       puts 'You won, you are a true mastermind!'
-      puts "The code was : #{code_to_pegs(code_combo, @peg)}"
+      puts "The code was : #{code_to_pegs(@code_combo, @peg)}"
       return true
     end
     false
   end
 
-  def update_board(row, combo)
-    @board[row][:guesses] = combo
+  def update_board(row, user_combo)
+    @board[row][:guesses] = user_combo
+    filtered_user = user_combo.filter_map.with_index do |element, index|
+      element if element != @code_combo[index]
+    end
+    filtered_code = @code_combo.filter_map.with_index do |element, index|
+      element if user_combo[index] != @code_combo[index]
+    end
+    @board[row][:correct_guesses] = 4 - filtered_user.size
+    @board[row][:correct_colors] = filtered_user.uniq.reduce(0) do |sum, value|
+      sum + ([filtered_code.count(value), filtered_user.count(value)].min % ([filtered_code.count(value), filtered_user.count(value)].max + 1))
+    end
   end
 
   # Printing Logic
@@ -123,10 +134,10 @@ class Game
 
   # Converting it to an integer in case it's nil
   def get_correct_places(row)
-    ('✔ ' * @board[row][:correct_place].to_i).colorize(:red)
+    ('✔ ' * @board[row][:correct_guesses].to_i).colorize(:red)
   end
 
   def get_correct_colors(row)
-    ('✘ ' * @board[row][:correct_color].to_i).colorize(:white)
+    ('✘ ' * @board[row][:correct_colors].to_i).colorize(:white)
   end
 end
