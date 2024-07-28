@@ -5,21 +5,61 @@ require_relative 'code'
 
 class Game
   include Code
-
-  COLORS = %i[yellow blue red green white black].freeze
+  ROLES = %i[guesser codemaker].freeze
   ROWS = 12
   ARROW = '⇩'.freeze
   BOARD_HEADER = ' _______________'.freeze
   BOARD_FOOTER = '|___|___|___|___|'.freeze
+
+  @peg_list = [' ☻ ', ' • ', ' ➊ '].freeze
+  @colors = %i[yellow blue red green white black].freeze
+
+  class << self
+    attr_reader :peg_list
+  end
+
+  class << self
+    attr_reader :colors
+  end
+
   def initialize(peg, role)
-    @player = Human.new(role)
-    @computer = Computer.new(:codemaker)
+    @guesser = (role.zero? ? Human.new(ROLES[0]) : Computer.new(ROLES[0]))
+    @codemaker = (role.zero? ? Computer.new(ROLES[1]) : Human.new(ROLES[1]))
     @play_count = 0
-    @peg = peg
-    @code = Array.new(4) { COLORS.sample } # Randomly select 4 colors
+    @peg = Game.peg_list[peg]
     @board = Array.new(12) { { guesses: Array.new(4, nil), correct_place: 0, correct_color: 0 } }
   end
 
+  def start_game
+    code_combo = @codemaker.play
+    loop do
+      print_board
+      # If all rows are full, game over
+      if @play_count == 12
+        puts "You lose! the code was #{code_to_pegs(code_combo, @peg)}"
+        return
+      end
+      # else, continue game
+      user_combo = @guesser.play
+      return if check_win(code_combo, user_combo)
+
+      update_board(@play_count, user_combo)
+      @play_count += 1
+    end
+  end
+
+  def check_win(code_combo, user_combo)
+    return unless code_combo.eql? user_combo
+
+    puts 'You won, you are a true mastermind!'
+    puts "The code was : #{code_to_pegs(code_combo, @peg)}"
+  end
+
+  def update_board(row, combo)
+    @board[row][:guesses] = combo
+  end
+
+  # Printing Logic
   def print_board
     print_board_header
     print_rows
@@ -30,15 +70,16 @@ class Game
   private
 
   def print_pegs
-    COLORS.each { |color| print "#{@peg.colorize(color)} " }
+    Game.colors.each { |color| print @peg.colorize(color) }
     puts
   end
 
   def print_input_instructions
-    print_pegs
-    6.times { |index| print '⇩  '.colorize(COLORS[index]) }
     puts
-    6.times { |index| print "#{index + 1}  ".colorize(COLORS[index]) }
+    print_pegs
+    6.times { |index| print ' ⇩ '.colorize(Game.colors[index]) }
+    puts
+    6.times { |index| print " #{index + 1} ".colorize(Game.colors[index]) }
     puts "  Make your guess ! #{@play_count.zero? ? "(e.g : #{generate_random_code.join})" : ''}"
   end
 
@@ -57,8 +98,15 @@ class Game
   end
 
   def get_peg(row, column)
-    color = @board[row][:guesses][column]
-    color.nil? ? ' ○ '.colorize(color: :grey, mode: :bold) : @peg.colorize(color: color, mode: :bold)
+    color_number = @board[row][:guesses][column]
+    if color_number.nil?
+      ' ○ '.colorize(color: :grey,
+                     mode: :bold)
+    else
+      @peg.colorize(
+        color: number_to_color(color_number), mode: :bold
+      )
+    end
   end
 
   # Converting it to an integer in case it's nil
@@ -70,6 +118,3 @@ class Game
     ('✘ ' * @board[row][:correct_color].to_i).colorize(:white)
   end
 end
-
-game = Game.new('➊ ', :guesser)
-game.print_board
