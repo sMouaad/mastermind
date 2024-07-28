@@ -70,6 +70,7 @@ class Game
 
   def update_board(row, user_combo)
     @board[row][:guesses] = user_combo
+    # to filter out correct guesses
     filtered_user = user_combo.filter_map.with_index do |element, index|
       element if element != @code_combo[index]
     end
@@ -77,6 +78,8 @@ class Game
       element if user_combo[index] != @code_combo[index]
     end
     @board[row][:correct_guesses] = 4 - filtered_user.size
+
+    # I don't know how to explain this, but I came up with this by trying combinations and looking for a pattern
     @board[row][:correct_colors] = filtered_user.uniq.sum do |value|
       ([filtered_code.count(value), filtered_user.count(value)].min % ([filtered_code.count(value), filtered_user.count(value)].max + 1))
     end
