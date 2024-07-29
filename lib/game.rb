@@ -12,22 +12,19 @@ class Game
   ARROW = ' ▼ '.freeze
   BOARD_HEADER = ' _______________'.freeze
   BOARD_FOOTER = '|___|___|___|___|'.freeze
-
   @peg_list = [' ☻ ', ' • ', ' ➊ '].freeze
   @colors = %i[yellow blue red green white black].freeze
+  @play_count = 0
 
   class << self
-    attr_reader :peg_list
-  end
-
-  class << self
-    attr_reader :colors
+    attr_accessor :play_count
+    attr_reader :peg_list, :colors
   end
 
   def initialize(peg, role)
     @guesser = (role.zero? ? Human.new(ROLES[0]) : Computer.new(ROLES[0]))
     @codemaker = (role.zero? ? Computer.new(ROLES[1]) : Human.new(ROLES[1]))
-    @play_count = 0
+
     @code_combo = nil
     @peg = Game.peg_list[peg]
     @board = Array.new(12) { { guesses: Array.new(4, nil), correct_guesses: 0, correct_colors: 0 } }
@@ -43,15 +40,15 @@ class Game
       # else, continue game
       user_combo = @guesser.play
 
-      update_board(@play_count, user_combo)
+      update_board(user_combo)
       return if check_win?(user_combo)
 
-      @play_count += 1
+      Game.play_count += 1
     end
   end
 
   def rows_full?
-    if @play_count == 12
+    if Game.play_count == 12
       puts "You lose! the code was #{code_to_pegs(@code_combo, @peg)}"
       return true
     end
@@ -68,12 +65,19 @@ class Game
     false
   end
 
-  def update_board(row, user_combo)
-    @board[row][:guesses] = user_combo
+  def update_board(user_combo)
+    @board[Game.play_count][:guesses] = user_combo
     # to filter out correct guesses
     correct_guesses_and_colors = calculate_correct_guesses_and_colors(user_combo, @code_combo)
-    @board[row][:correct_guesses] = correct_guesses_and_colors[0]
-    @board[row][:correct_colors] = correct_guesses_and_colors[1]
+    @board[Game.play_count][:correct_guesses] = correct_guesses_and_colors[0]
+    @board[Game.play_count][:correct_colors] = correct_guesses_and_colors[1]
+  end
+
+  # Returns the last guess
+  def last_guess
+    return nil if Game.play_count.zero?
+
+    @board[Game.play_count - 1][:guesses]
   end
 
   # Printing Logic
@@ -97,7 +101,7 @@ class Game
     print_pegs
     puts ARROW.colorize(color: :grey, mode: :bold) * 6
     6.times { |index| print " #{index + 1} ".colorize(color: Game.colors[index], mode: :bold) }
-    puts "  Make your guess ! #{@play_count.zero? ? "(e.g : #{generate_random_code.join})" : ''}"
+    puts "  Make your guess ! #{Game.play_count.zero? ? "(e.g : #{generate_random_code.join})" : ''}"
   end
 
   def print_board_header
