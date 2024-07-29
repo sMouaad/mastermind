@@ -20,4 +20,23 @@ module Code
   def code_to_s(code)
     code.join
   end
+
+  def filter_correct_guesses(code_to_filter, code_filter)
+    code_to_filter.filter_map.with_index do |element, index|
+      element if code_to_filter[index] != code_filter[index]
+    end
+  end
+
+  # returns [correct_guesses, correct_colors]
+  def calculate_correct_guesses_and_colors(user_code, game_code)
+    filtered_user = filter_correct_guesses(user_code, game_code)
+    filtered_code = filter_correct_guesses(game_code, user_code)
+
+    # I don't know how to explain this, but I came up with this by trying combinations and looking for a pattern
+    correct_colors = filtered_user.uniq.sum do |value|
+      ([filtered_code.count(value),
+        filtered_user.count(value)].min % ([filtered_code.count(value), filtered_user.count(value)].max + 1))
+    end
+    [4 - filtered_user.size, correct_colors]
+  end
 end
