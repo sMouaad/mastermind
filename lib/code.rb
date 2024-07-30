@@ -1,5 +1,6 @@
 require_relative 'game'
 
+# Module that handles any operations related to the game code & colors
 module Code
   @code_set = (1..6).to_a.repeated_permutation(4).to_a.map(&:join)
   def self.set
@@ -22,8 +23,8 @@ module Code
     Game.colors[number - 1]
   end
 
-  def code_to_pegs(number, peg)
-    Array.new(4) { |index| peg.colorize(number_to_color(number[index])) }.join
+  def code_to_pegs(number)
+    Array.new(4) { |index| Game.peg.colorize(number_to_color(number[index])) }.join
   end
 
   def code_to_s(code)

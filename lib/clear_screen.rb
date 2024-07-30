@@ -1,9 +1,8 @@
 require 'io/console'
 
+# Module to clear screen
 module ClearScreen
-  protected
-
-  def clear_screen
+  def self.clear_screen
     $stdout.clear_screen
   end
 end

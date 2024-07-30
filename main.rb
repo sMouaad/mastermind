@@ -1,6 +1,7 @@
 require_relative 'lib/game'
+require_relative 'lib/clear_screen'
 
-def set_peg
+def set_peg # rubocop:disable Metrics/MethodLength
   puts '__________Customization__________'
   puts ''
   puts 'Choose one of the pegs below :'
@@ -16,7 +17,8 @@ def set_peg
   end
 end
 
-def set_role
+def set_role # rubocop:disable Metrics/MethodLength
+  ClearScreen.clear_screen
   puts '___________Role Choice___________'
   puts ''
   puts 'Choose one of the roles below :'

@@ -1,6 +1,7 @@
 require_relative 'player'
 require_relative 'game'
 
+# Computer class handling play logic
 class Computer < Player
   def play
     if @role == :codemaker
