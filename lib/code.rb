@@ -1,6 +1,15 @@
 require_relative 'game'
 
 module Code
+  @code_set = (1..6).to_a.repeated_permutation(4).to_a.map(&:join)
+  def self.set
+    @code_set
+  end
+
+  def self.set=(new_set)
+    @code_set = new_set
+  end
+
   def code_valid?(code)
     code.match?(/^[1-6]{4}$/)
   end
@@ -19,6 +28,10 @@ module Code
 
   def code_to_s(code)
     code.join
+  end
+
+  def s_to_code(string)
+    string.chars.map(&:to_i)
   end
 
   def filter_correct_guesses(code_to_filter, code_filter)

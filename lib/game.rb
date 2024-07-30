@@ -14,20 +14,28 @@ class Game
   BOARD_FOOTER = '|___|___|___|___|'.freeze
   @peg_list = [' ☻ ', ' • ', ' ➊ '].freeze
   @colors = %i[yellow blue red green white black].freeze
-  @play_count = 0
+  @play_count = nil
+  @board = nil
 
   class << self
-    attr_accessor :play_count
+    attr_accessor :play_count, :board
     attr_reader :peg_list, :colors
   end
 
-  def initialize(peg, role)
+  # Returns the last guess
+  def self.last_guess
+    return nil if Game.play_count.zero?
+
+    Game.board[Game.play_count - 1]
+  end
+
+  def initialize(peg, role) # rubocop:disable Metrics/AbcSize
+    Game.play_count = 0
+    Game.board = Array.new(12) { { guesses: Array.new(4, nil), correct_guesses: 0, correct_colors: 0 } }
     @guesser = (role.zero? ? Human.new(ROLES[0]) : Computer.new(ROLES[0]))
     @codemaker = (role.zero? ? Computer.new(ROLES[1]) : Human.new(ROLES[1]))
-
     @code_combo = nil
     @peg = Game.peg_list[peg]
-    @board = Array.new(12) { { guesses: Array.new(4, nil), correct_guesses: 0, correct_colors: 0 } }
   end
 
   def start_game
@@ -66,18 +74,11 @@ class Game
   end
 
   def update_board(user_combo)
-    @board[Game.play_count][:guesses] = user_combo
+    Game.board[Game.play_count][:guesses] = user_combo
     # to filter out correct guesses
     correct_guesses_and_colors = calculate_correct_guesses_and_colors(user_combo, @code_combo)
-    @board[Game.play_count][:correct_guesses] = correct_guesses_and_colors[0]
-    @board[Game.play_count][:correct_colors] = correct_guesses_and_colors[1]
-  end
-
-  # Returns the last guess
-  def last_guess
-    return nil if Game.play_count.zero?
-
-    @board[Game.play_count - 1][:guesses]
+    Game.board[Game.play_count][:correct_guesses] = correct_guesses_and_colors[0]
+    Game.board[Game.play_count][:correct_colors] = correct_guesses_and_colors[1]
   end
 
   # Printing Logic
@@ -101,7 +102,7 @@ class Game
     print_pegs
     puts ARROW.colorize(color: :grey, mode: :bold) * 6
     6.times { |index| print " #{index + 1} ".colorize(color: Game.colors[index], mode: :bold) }
-    puts "  Make your guess ! #{Game.play_count.zero? ? "(e.g : #{generate_random_code.join})" : ''}"
+    puts "  Make your guess ! #{Game.play_count.zero? ? "(e.g : #{code_to_s(generate_random_code)})" : ''}"
   end
 
   def print_board_header
@@ -119,7 +120,7 @@ class Game
   end
 
   def get_peg(row, column)
-    color_number = @board[row][:guesses][column]
+    color_number = Game.board[row][:guesses][column]
     if color_number.nil?
       ' ○ '.colorize(color: :grey,
                      mode: :bold)
@@ -132,10 +133,10 @@ class Game
 
   # Converting it to an integer in case it's nil
   def get_correct_places(row)
-    ('✔ ' * @board[row][:correct_guesses].to_i).colorize(:red)
+    ('✔ ' * Game.board[row][:correct_guesses].to_i).colorize(:red)
   end
 
   def get_correct_colors(row)
-    ('✘ ' * @board[row][:correct_colors].to_i).colorize(:white)
+    ('✘ ' * Game.board[row][:correct_colors].to_i).colorize(:white)
   end
 end
