@@ -68,7 +68,7 @@ class Game
   def check_win?(user_combo)
     if @code_combo.eql? user_combo
       print_board
-      puts @guesser.is_a?(Human) ? 'You won, you are a true mastermind!' : "Computer won!"
+      puts @guesser.is_a?(Human) ? 'You won, you are a true mastermind!' : 'Computer won!'
       puts "The code was : #{code_to_pegs(@code_combo)}"
       return true
     end
